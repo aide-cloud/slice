@@ -223,3 +223,15 @@ func (s *advancedSlice[T]) Values() []T {
 func (s *advancedSlice[T]) Length() int {
 	return Length(s.data)
 }
+
+// Filter creates a new slice containing elements that satisfy a given predicate function.
+//
+// Parameters:
+//   - f: A predicate function that takes an element and its index as arguments and returns a boolean.
+//
+// Returns:
+//
+//	A new IAdvancedSlice[T] containing the filtered elements.
+func (s *advancedSlice[T]) Filter(f func(T, int) bool) []T {
+	return Filter(s.data, f)
+}

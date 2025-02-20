@@ -317,3 +317,23 @@ func Sort[T any](s []T, f func(a, b T) bool) []T {
 	})
 	return s
 }
+
+// Filter creates a new slice by filtering elements based on a predicate function.
+//
+// Parameters:
+//   - s: The slice to filter.
+//   - f: A predicate function that determines whether an element should be included in the new slice.
+//     in the new slice.
+//
+// Returns:
+//
+//	A new slice containing only the elements that satisfy the predicate.
+func Filter[T any](s []T, f func(T, int) bool) []T {
+	list := make([]T, 0, len(s))
+	for i, item := range s {
+		if f(item, i) {
+			list = append(list, item)
+		}
+	}
+	return list
+}

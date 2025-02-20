@@ -153,4 +153,13 @@ type IAdvancedSlice[T any] interface {
 	// Returns:
 	//   A slice of type []T containing all elements.
 	Values() []T
+
+	// Filter creates a new slice by filtering elements based on a predicate function.
+	//
+	// Parameters:
+	//   - f: A predicate function that determines whether an element should be included in the new slice.
+	//
+	// Returns:
+	//   A new slice containing elements that satisfy the predicate.
+	Filter(f func(T, int) bool) []T
 }
