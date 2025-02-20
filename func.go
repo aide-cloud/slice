@@ -241,7 +241,11 @@ func Slice[T any](s []T, indexes ...int) []T {
 		return s[begin:end]
 	case 3:
 		begin, end, step := indexes[0], indexes[1], indexes[2]
-		return s[begin:end:step]
+		list := make([]T, 0, (end-begin)/step)
+		for i := begin; i < end; i += step {
+			list = append(list, s[i])
+		}
+		return list
 	default:
 		return s
 	}
