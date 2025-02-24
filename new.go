@@ -16,6 +16,6 @@ package slice
 //
 //	// Create an empty advanced slice
 //	emptyAdvanced := NewAdvancedSlice[int](nil)
-func NewAdvancedSlice[T any](data []T) IAdvancedSlice[T] {
+func NewAdvancedSlice[T any](data ...T) IAdvancedSlice[T] {
 	return &advancedSlice[T]{data: data}
 }

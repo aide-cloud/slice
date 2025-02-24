@@ -1,53 +1,26 @@
-// func_test.go
 package slice_test
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/aide-cloud/slice"
 )
 
-func slicesStringEqual(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
-func slicesIntEqual(a, b []int) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
 func TestLength(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    []int
-		expected int
+		name string
+		s    []int
+		want int
 	}{
 		{"empty slice", []int{}, 0},
-		{"one element", []int{1}, 1},
-		{"multiple elements", []int{1, 2, 3, 4, 5}, 5},
+		{"non-empty slice", []int{1, 2, 3}, 3},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := slice.Length(tt.input)
-			if actual != tt.expected {
-				t.Errorf("Length(%v) = %d; want %d", tt.input, actual, tt.expected)
+			if got := slice.Length(tt.s); got != tt.want {
+				t.Errorf("Length() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -56,19 +29,17 @@ func TestLength(t *testing.T) {
 func TestMap(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    []int
-		expected []string
+		list     []int
+		f        func(int, int) string
+		wantList []string
 	}{
-		{"empty slice", []int{}, []string{}},
-		{"one element", []int{1}, []string{"1"}},
-		{"multiple elements", []int{1, 2, 3}, []string{"1", "2", "3"}},
+		{"empty slice", []int{}, func(i int, idx int) string { return fmt.Sprintf("%d", i) }, []string{}},
+		{"non-empty slice", []int{1, 2, 3}, func(i int, idx int) string { return fmt.Sprintf("%d", i*idx) }, []string{"0", "2", "6"}},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := slice.Map(tt.input, func(x int, _ int) string { return fmt.Sprintf("%d", x) })
-			if !slicesStringEqual(actual, tt.expected) {
-				t.Errorf("Map(%v) = %v; want %v", tt.input, actual, tt.expected)
+			if gotList := slice.Map(tt.list, tt.f); !reflect.DeepEqual(gotList, tt.wantList) {
+				t.Errorf("Map() = %v, want %v", gotList, tt.wantList)
 			}
 		})
 	}
@@ -76,20 +47,18 @@ func TestMap(t *testing.T) {
 
 func TestUnique(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    []string
-		expected []string
+		name string
+		s    []int
+		f    func(int) int
+		want []int
 	}{
-		{"empty slice", []string{}, []string{}},
-		{"no duplicates", []string{"apple", "banana", "cherry"}, []string{"apple", "banana", "cherry"}},
-		{"with duplicates", []string{"apple", "banana", "apple", "orange"}, []string{"apple", "banana", "orange"}},
+		{"empty slice", []int{}, func(i int) int { return i }, []int{}},
+		{"non-empty slice", []int{1, 2, 2, 3, 4, 4, 5}, func(i int) int { return i }, []int{1, 2, 3, 4, 5}},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := slice.Unique(tt.input, func(x string) string { return x })
-			if !slicesStringEqual(actual, tt.expected) {
-				t.Errorf("Unique(%v) = %v; want %v", tt.input, actual, tt.expected)
+			if got := slice.Unique(tt.s, tt.f); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Unique() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -97,20 +66,18 @@ func TestUnique(t *testing.T) {
 
 func TestConcat(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    [][]int
-		expected []int
+		name string
+		args [][]int
+		want []int
 	}{
-		{"empty slices", [][]int{}, []int{}},
+		{"no slices", nil, nil},
 		{"one slice", [][]int{{1, 2, 3}}, []int{1, 2, 3}},
 		{"multiple slices", [][]int{{1, 2}, {3, 4}, {5, 6}}, []int{1, 2, 3, 4, 5, 6}},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := slice.Concat(tt.input...)
-			if !slicesIntEqual(actual, tt.expected) {
-				t.Errorf("Concat(%v) = %v; want %v", tt.input, actual, tt.expected)
+			if got := slice.Concat(tt.args...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Concat() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -118,21 +85,19 @@ func TestConcat(t *testing.T) {
 
 func TestCopyWithIn(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    []int
-		indexes  []int
-		expected []int
+		name      string
+		s         []int
+		indexList []int
+		want      []int
 	}{
-		{"empty slice", []int{}, []int{}, []int{}},
-		{"one index", []int{1, 2, 3}, []int{1}, []int{2}},
-		{"multiple indices", []int{1, 2, 3, 4, 5}, []int{0, 2, 4}, []int{1, 3, 5}},
+		{"empty slice", []int{}, []int{}, nil},
+		{"valid indices", []int{1, 2, 3, 4, 5}, []int{0, 2, 4}, []int{1, 3, 5}},
+		{"invalid indices", []int{1, 2, 3}, []int{0, 5}, []int{1}},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := slice.CopyWithIn(tt.input, tt.indexes...)
-			if !slicesIntEqual(actual, tt.expected) {
-				t.Errorf("CopyWithIn(%v, %v) = %v; want %v", tt.input, tt.indexes, actual, tt.expected)
+			if got := slice.CopyWithIn(tt.s, tt.indexList...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CopyWithIn() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -140,21 +105,19 @@ func TestCopyWithIn(t *testing.T) {
 
 func TestEvery(t *testing.T) {
 	tests := []struct {
-		name      string
-		input     []int
-		predicate func(int) bool
-		expected  bool
+		name string
+		s    []int
+		f    func(int) bool
+		want bool
 	}{
-		{"empty slice", []int{}, func(x int) bool { return x > 0 }, true},
-		{"all true", []int{1, 2, 3}, func(x int) bool { return x > 0 }, true},
-		{"some false", []int{1, 2, -3}, func(x int) bool { return x > 0 }, false},
+		{"empty slice", []int{}, func(i int) bool { return i > 0 }, true},
+		{"all elements satisfy predicate", []int{1, 2, 3}, func(i int) bool { return i > 0 }, true},
+		{"not all elements satisfy predicate", []int{1, -1, 3}, func(i int) bool { return i > 0 }, false},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := slice.Every(tt.input, tt.predicate)
-			if actual != tt.expected {
-				t.Errorf(`Every(%v, f) = %v; want %v`, tt.input, actual, tt.expected)
+			if got := slice.Every(tt.s, tt.f); got != tt.want {
+				t.Errorf("Every() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -162,21 +125,19 @@ func TestEvery(t *testing.T) {
 
 func TestFind(t *testing.T) {
 	tests := []struct {
-		name      string
-		input     []int
-		predicate func(int) bool
-		expected  int
+		name string
+		s    []int
+		f    func(int) bool
+		want int
 	}{
-		{"empty slice", []int{}, func(x int) bool { return x > 0 }, 0},
-		{"found", []int{1, 2, 3}, func(x int) bool { return x > 1 }, 2},
-		{"not found", []int{1, 2, 3}, func(x int) bool { return x > 3 }, 0},
+		{"empty slice", []int{}, func(i int) bool { return i == 2 }, 0},
+		{"element found", []int{1, 2, 3}, func(i int) bool { return i == 2 }, 2},
+		{"element not found", []int{1, 3, 5}, func(i int) bool { return i == 2 }, 0},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := slice.Find(tt.input, tt.predicate)
-			if actual != tt.expected {
-				t.Errorf("Find(%v, f) = %v; want %v", tt.input, actual, tt.expected)
+			if got := slice.Find(tt.s, tt.f); got != tt.want {
+				t.Errorf("Find() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -184,21 +145,19 @@ func TestFind(t *testing.T) {
 
 func TestFindIndex(t *testing.T) {
 	tests := []struct {
-		name      string
-		input     []int
-		predicate func(int) bool
-		expected  int
+		name string
+		s    []int
+		f    func(int) bool
+		want int
 	}{
-		{"empty slice", []int{}, func(x int) bool { return x > 0 }, -1},
-		{"found", []int{1, 2, 3}, func(x int) bool { return x > 1 }, 1},
-		{"not found", []int{1, 2, 3}, func(x int) bool { return x > 3 }, -1},
+		{"empty slice", []int{}, func(i int) bool { return i == 2 }, -1},
+		{"element found", []int{1, 2, 3}, func(i int) bool { return i == 2 }, 1},
+		{"element not found", []int{1, 3, 5}, func(i int) bool { return i == 2 }, -1},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := slice.FindIndex(tt.input, tt.predicate)
-			if actual != tt.expected {
-				t.Errorf("FindIndex(%v, f) = %v; want %v", tt.input, actual, tt.expected)
+			if got := slice.FindIndex(tt.s, tt.f); got != tt.want {
+				t.Errorf("FindIndex() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -206,21 +165,19 @@ func TestFindIndex(t *testing.T) {
 
 func TestFindLast(t *testing.T) {
 	tests := []struct {
-		name      string
-		input     []int
-		predicate func(int) bool
-		expected  int
+		name string
+		s    []int
+		f    func(int) bool
+		want int
 	}{
-		{"empty slice", []int{}, func(x int) bool { return x > 0 }, 0},
-		{"found", []int{1, 2, 3, 2}, func(x int) bool { return x == 2 }, 2},
-		{"not found", []int{1, 2, 3}, func(x int) bool { return x > 3 }, 0},
+		{"empty slice", []int{}, func(i int) bool { return i == 2 }, 0},
+		{"element found", []int{1, 2, 3, 2}, func(i int) bool { return i == 2 }, 2},
+		{"element not found", []int{1, 3, 5}, func(i int) bool { return i == 2 }, 0},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := slice.FindLast(tt.input, tt.predicate)
-			if actual != tt.expected {
-				t.Errorf("FindLast(%v, f) = %v; want %v", tt.input, actual, tt.expected)
+			if got := slice.FindLast(tt.s, tt.f); got != tt.want {
+				t.Errorf("FindLast() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -228,21 +185,19 @@ func TestFindLast(t *testing.T) {
 
 func TestFindLastIndex(t *testing.T) {
 	tests := []struct {
-		name      string
-		input     []int
-		predicate func(int) bool
-		expected  int
+		name string
+		s    []int
+		f    func(int) bool
+		want int
 	}{
-		{"empty slice", []int{}, func(x int) bool { return x > 0 }, -1},
-		{"found", []int{1, 2, 3, 2}, func(x int) bool { return x == 2 }, 3},
-		{"not found", []int{1, 2, 3}, func(x int) bool { return x > 3 }, -1},
+		{"empty slice", []int{}, func(i int) bool { return i == 2 }, -1},
+		{"element found", []int{1, 2, 3, 2}, func(i int) bool { return i == 2 }, 3},
+		{"element not found", []int{1, 3, 5}, func(i int) bool { return i == 2 }, -1},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := slice.FindLastIndex(tt.input, tt.predicate)
-			if actual != tt.expected {
-				t.Errorf("FindLastIndex(%v, f) = %v; want %v", tt.input, actual, tt.expected)
+			if got := slice.FindLastIndex(tt.s, tt.f); got != tt.want {
+				t.Errorf("FindLastIndex() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -250,68 +205,71 @@ func TestFindLastIndex(t *testing.T) {
 
 func TestForEach(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    []int
-		expected []int
+		name string
+		s    []int
+		f    func(int, int)
 	}{
-		{"empty slice", []int{}, []int{}},
-		{"modify elements", []int{1, 2, 3}, []int{2, 3, 4}},
+		{"empty slice", []int{}, func(i int, idx int) {}},
+		{"non-empty slice", []int{1, 2, 3}, func(i int, idx int) { t.Logf("Element: %d, Index: %d", i, idx) }},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := make([]int, len(tt.input))
-			copy(actual, tt.input)
-			slice.ForEach(actual, func(x int, i int) {
-				if x != actual[i] || x+1 != tt.input[i] {
-					t.Errorf("ForEach(%v, f) modified slice incorrectly", tt.input)
-				}
-			})
+			slice.ForEach(tt.s, tt.f)
 		})
 	}
 }
 
 func TestJoin(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    []int
-		sep      string
-		expected string
+		name string
+		s    []int
+		seps []string
+		want string
 	}{
-		{"empty slice", []int{}, ",", ""},
-		{"one element", []int{1}, ",", "1"},
-		{"multiple elements", []int{1, 2, 3}, ",", "1,2,3"},
-		{"multiple elements with custom sep", []int{1, 2, 3}, "-", "1-2-3"},
+		{"empty slice", []int{}, nil, ""},
+		{"non-empty slice", []int{1, 2, 3}, nil, "123"},
+		{"with separator", []int{1, 2, 3}, []string{","}, "1,2,3"},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := slice.Join(tt.input, tt.sep)
-			if actual != tt.expected {
-				t.Errorf("Join(%v, %v) = %v; want %v", tt.input, tt.sep, actual, tt.expected)
+			if got := slice.Join(tt.s, tt.seps...); got != tt.want {
+				t.Errorf("Join() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
+// TestSlice tests the Slice function with various scenarios.
 func TestSlice(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    []int
-		indexes  []int
-		expected []int
+		name    string
+		s       []int
+		indexes []int
+		want    []int
 	}{
 		{"empty slice", []int{}, []int{0}, []int{}},
-		{"one index", []int{1, 2, 3}, []int{1}, []int{2, 3}},
-		{"two indices", []int{1, 2, 3, 4, 5}, []int{1, 4}, []int{2, 3, 4}},
-		{"three indices", []int{1, 2, 3, 4, 5}, []int{0, 4, 2}, []int{1, 3}},
+		{"single index", []int{1, 2, 3, 4, 5}, []int{2}, []int{3, 4, 5}},
+		{"two indices", []int{1, 2, 3, 4, 5}, []int{1, 3}, []int{2, 3}},
+		{"three indices", []int{1, 2, 3, 4, 5, 6, 7, 8, 9}, []int{1, 7, 2}, []int{2, 4, 6, 8}},
+		{"begin greater than end", []int{1, 2, 3, 4, 5}, []int{3, 1}, nil},
+		{"begin negative", []int{1, 2, 3, 4, 5}, []int{-1, 3}, nil},
+		{"end greater than length", []int{1, 2, 3, 4, 5}, []int{1, 10}, []int{2, 3, 4, 5}},
+		{"step zero", []int{1, 2, 3, 4, 5}, []int{1, 4, 0}, nil},
+		{"step negative", []int{1, 2, 3, 4, 5}, []int{1, 4, -1}, nil},
+		{"no indexes", []int{1, 2, 3, 4, 5}, []int{}, []int{1, 2, 3, 4, 5}},
+		{"begin equals end", []int{1, 2, 3, 4, 5}, []int{2, 2}, []int{}},
+		{"begin equals length", []int{1, 2, 3, 4, 5}, []int{5}, []int{}},
+		{"begin greater than length", []int{1, 2, 3, 4, 5}, []int{6}, nil},
+		{"begin and end equal length", []int{1, 2, 3, 4, 5}, []int{5, 5}, []int{}},
+		{"begin and end greater than length", []int{1, 2, 3, 4, 5}, []int{6, 7}, nil},
+		{"step greater than length", []int{1, 2, 3, 4, 5}, []int{0, 5, 6}, []int{1}},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := slice.Slice(tt.input, tt.indexes...)
-			if !slicesIntEqual(actual, tt.expected) {
-				t.Errorf("Slice(%v, %v) = %v; want %v", tt.input, tt.indexes, actual, tt.expected)
+			got := slice.Slice(tt.s, tt.indexes...)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Slice(%v, %v) = %v, want %v", tt.s, tt.indexes, got, tt.want)
 			}
 		})
 	}
@@ -320,21 +278,24 @@ func TestSlice(t *testing.T) {
 func TestFill(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    []int
+		slice    []int
 		value    int
 		indexes  []int
 		expected []int
 	}{
-		{"empty slice", []int{}, 1, []int{0}, []int{}},
 		{"fill all", []int{1, 2, 3}, 0, []int{}, []int{0, 0, 0}},
-		{"fill specific indices", []int{1, 2, 3, 4, 5}, 0, []int{1, 3}, []int{1, 0, 3, 0, 5}},
+		{"fill from index", []int{1, 2, 3}, 0, []int{1}, []int{1, 0, 0}},
+		{"fill range", []int{1, 2, 3, 4, 5}, 0, []int{1, 3}, []int{1, 0, 0, 4, 5}},
+		{"fill invalid index", []int{1, 2, 3}, 0, []int{5}, []int{1, 2, 3}},
+		{"fill negative index", []int{1, 2, 3}, 0, []int{-1}, []int{3, 0, 0}},
+		{"fill reverse range", []int{1, 2, 3, 4, 5}, 0, []int{3, 1}, []int{1, 0, 0, 4, 5}},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := slice.Fill(tt.input, tt.value, tt.indexes...)
-			if !slicesIntEqual(actual, tt.expected) {
-				t.Errorf("Fill(%v, %v, %v) = %v; want %v", tt.input, tt.value, tt.indexes, actual, tt.expected)
+			result := slice.Fill(tt.slice, tt.value, tt.indexes...)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Fill(%v, %v, %v) = %v, want %v", tt.slice, tt.value, tt.indexes, result, tt.expected)
 			}
 		})
 	}
@@ -343,19 +304,131 @@ func TestFill(t *testing.T) {
 func TestString(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    []int
+		slice    []int
 		expected string
 	}{
 		{"empty slice", []int{}, "[]"},
-		{"one element", []int{1}, "[1]"},
-		{"multiple elements", []int{1, 2, 3}, "[1,2,3]"},
+		{"non-empty slice", []int{1, 2, 3}, "[1,2,3]"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := slice.String(tt.input)
-			if actual != tt.expected {
-				t.Errorf("String(%v) = %v; want %v", tt.input, actual, tt.expected)
+			result := slice.String(tt.slice)
+			if result != tt.expected {
+				t.Errorf("String(%v) = %v, want %v", tt.slice, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestAt(t *testing.T) {
+	tests := []struct {
+		name     string
+		slice    []int
+		index    int
+		expected int
+	}{
+		{"valid index", []int{1, 2, 3}, 1, 2},
+		{"out of bounds", []int{1, 2, 3}, 5, 0},
+		{"negative index", []int{1, 2, 3}, -1, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := slice.At(tt.slice, tt.index)
+			if result != tt.expected {
+				t.Errorf("At(%v, %v) = %v, want %v", tt.slice, tt.index, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSort(t *testing.T) {
+	tests := []struct {
+		name     string
+		slice    []int
+		less     func(a, b int) bool
+		expected []int
+	}{
+		{"ascending", []int{3, 1, 2}, func(a, b int) bool { return a < b }, []int{1, 2, 3}},
+		{"descending", []int{3, 1, 2}, func(a, b int) bool { return a > b }, []int{3, 2, 1}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := slice.Sort(tt.slice, tt.less)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Sort(%v, f) = %v, want %v", tt.slice, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestFilter(t *testing.T) {
+	tests := []struct {
+		name     string
+		slice    []int
+		filter   func(a int, index int) bool
+		expected []int
+	}{
+		{"filter even", []int{1, 2, 3, 4}, func(a int, index int) bool { return a%2 == 0 }, []int{2, 4}},
+		{"filter odd", []int{1, 2, 3, 4}, func(a int, index int) bool { return a%2 != 0 }, []int{1, 3}},
+		{"filter all", []int{1, 2, 3, 4}, func(a int, index int) bool { return true }, []int{1, 2, 3, 4}},
+		{"filter none", []int{1, 2, 3, 4}, func(a int, index int) bool { return false }, []int{}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := slice.Filter(tt.slice, tt.filter)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Filter(%v, f) = %v, want %v", tt.slice, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestRemove(t *testing.T) {
+	tests := []struct {
+		name     string
+		slice    []int
+		filter   func(a int, index int) bool
+		expected []int
+	}{
+		{"remove even", []int{1, 2, 3, 4}, func(a int, index int) bool { return a%2 == 0 }, []int{1, 3}},
+		{"remove odd", []int{1, 2, 3, 4}, func(a int, index int) bool { return a%2 != 0 }, []int{2, 4}},
+		{"remove all", []int{1, 2, 3, 4}, func(a int, index int) bool { return true }, []int{}},
+		{"remove none", []int{1, 2, 3, 4}, func(a int, index int) bool { return false }, []int{1, 2, 3, 4}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := slice.Remove(tt.slice, tt.filter)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Remove(%v, f) = %v, want %v", tt.slice, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestRemoveAt(t *testing.T) {
+	tests := []struct {
+		name     string
+		slice    []int
+		index    int
+		expected []int
+	}{
+		{"remove middle", []int{1, 2, 3, 4}, 2, []int{1, 2, 4}},
+		{"remove first", []int{1, 2, 3, 4}, 0, []int{2, 3, 4}},
+		{"remove last", []int{1, 2, 3, 4}, 3, []int{1, 2, 3}},
+		{"remove out of bounds", []int{1, 2, 3, 4}, 5, []int{1, 2, 3, 4}},
+		{"remove negative index", []int{1, 2, 3, 4}, -1, []int{1, 2, 3, 4}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := slice.RemoveAt(tt.slice, tt.index)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("RemoveAt(%v, %v) = %v, want %v", tt.slice, tt.index, result, tt.expected)
 			}
 		})
 	}

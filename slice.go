@@ -51,11 +51,11 @@ func (s *advancedSlice[T]) Unique(f func(T) string) IAdvancedSlice[T] {
 // Returns:
 //
 //	A new IAdvancedSlice[T] containing all elements from the input slices.
-func (s *advancedSlice[T]) Concat(ss ...advancedSlice[T]) IAdvancedSlice[T] {
+func (s *advancedSlice[T]) Concat(ss ...IAdvancedSlice[T]) IAdvancedSlice[T] {
 	list := make([][]T, 0, len(ss))
 	list = append(list, s.data)
 	for _, a := range ss {
-		list = append(list, a.data)
+		list = append(list, a.Values())
 	}
 	s.data = Concat(list...)
 	return s
@@ -234,4 +234,164 @@ func (s *advancedSlice[T]) Length() int {
 //	A new IAdvancedSlice[T] containing the filtered elements.
 func (s *advancedSlice[T]) Filter(f func(T, int) bool) []T {
 	return Filter(s.data, f)
+}
+
+// Pop removes and returns the last element from the slice.
+//
+// Returns:
+//
+//	The last element of the slice.
+func (s *advancedSlice[T]) Pop() T {
+	length := s.Length()
+	if length == 0 {
+		var zero T
+		return zero
+	}
+
+	last := s.At(length - 1)
+	s.data = s.data[:length-1]
+	return last
+}
+
+// PopIs removes and returns the last element from the slice.
+//
+// Returns:
+//
+//	The last element of the slice and a boolean indicating whether the operation was successful.
+func (s *advancedSlice[T]) PopIs() (T, bool) {
+	length := s.Length()
+	if length == 0 {
+		var zero T
+		return zero, false
+	}
+
+	last := s.At(length - 1)
+	s.data = s.data[:length-1]
+	return last, true
+}
+
+// Push adds one or more elements to the end of the slice.
+//
+// Parameters:
+//   - values: One or more elements to add.
+//
+// Returns:
+//
+//	A new IAdvancedSlice[T] with the added elements.
+func (s *advancedSlice[T]) Push(values ...T) IAdvancedSlice[T] {
+	s.data = append(s.data, values...)
+	return s
+}
+
+// PushSlice adds one or more slices to the end of the slice.
+//
+// Parameters:
+//   - values: One or more slices to add.
+//
+// Returns:
+//
+//	A new IAdvancedSlice[T] with the added slices.
+func (s *advancedSlice[T]) PushSlice(values ...IAdvancedSlice[T]) IAdvancedSlice[T] {
+	for _, v := range values {
+		s.data = append(s.data, v.Values()...)
+	}
+	return s
+}
+
+// Shift removes and returns the first element from the slice.
+//
+// Returns:
+//
+//	The first element of the slice.
+func (s *advancedSlice[T]) Shift() T {
+	length := s.Length()
+	if length == 0 {
+		var zero T
+		return zero
+	}
+
+	first := s.At(0)
+	s.data = s.data[1:]
+	return first
+}
+
+// ShiftIs removes and returns the first element from the slice.
+//
+// Returns:
+//
+//	The first element of the slice and a boolean indicating whether the operation was successful.
+func (s *advancedSlice[T]) ShiftIs() (T, bool) {
+	length := s.Length()
+	if length == 0 {
+		var zero T
+		return zero, false
+	}
+
+	first := s.At(0)
+	s.data = s.data[1:]
+	return first, true
+}
+
+// Unshift adds one or more elements to the beginning of the slice.
+//
+// Parameters:
+//   - values: One or more elements to add.
+//
+// Returns:
+//
+//	A new IAdvancedSlice[T] with the added elements.
+func (s *advancedSlice[T]) Unshift(values ...T) IAdvancedSlice[T] {
+	s.data = append(values, s.data...)
+	return s
+}
+
+// UnshiftSlice adds one or more slices to the beginning of the slice.
+//
+// Parameters:
+//   - values: One or more slices to add.
+//
+// Returns:
+//
+//	A new IAdvancedSlice[T] with the added slices.
+func (s *advancedSlice[T]) UnshiftSlice(values ...IAdvancedSlice[T]) IAdvancedSlice[T] {
+	for _, v := range values {
+		s.data = append(v.Values(), s.data...)
+	}
+	return s
+}
+
+// Reverse reverses the order of elements in the slice.
+//
+// Returns:
+//
+//	A new IAdvancedSlice[T] with reversed elements.
+func (s *advancedSlice[T]) Reverse() IAdvancedSlice[T] {
+	s.data = Reverse(s.data)
+	return s
+}
+
+// Remove removes elements from the slice based on a predicate function.
+//
+// Parameters:
+//   - f: A predicate function that takes an element and its index as arguments and returns a boolean.
+//
+// Returns:
+//
+//	A new IAdvancedSlice[T] with the removed elements.
+func (s *advancedSlice[T]) Remove(f func(T, int) bool) IAdvancedSlice[T] {
+	s.data = Remove(s.data, f)
+	return s
+}
+
+// RemoveAt removes an element at the specified index from the slice.
+//
+// Parameters:
+//   - index: The index of the element to remove.
+//
+// Returns:
+//
+//	A new IAdvancedSlice[T] with the removed element.
+func (s *advancedSlice[T]) RemoveAt(index int) IAdvancedSlice[T] {
+	s.data = RemoveAt(s.data, index)
+	return s
 }

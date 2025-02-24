@@ -40,7 +40,7 @@ type IAdvancedSlice[T any] interface {
 	//
 	// Returns:
 	//   A new IAdvancedSlice[T] containing all elements from the input slices.
-	Concat(s ...advancedSlice[T]) IAdvancedSlice[T]
+	Concat(s ...IAdvancedSlice[T]) IAdvancedSlice[T]
 
 	// CopyWithIn creates a new advanced slice containing elements at specified indices from the original slice.
 	//
@@ -162,4 +162,90 @@ type IAdvancedSlice[T any] interface {
 	// Returns:
 	//   A new slice containing elements that satisfy the predicate.
 	Filter(f func(T, int) bool) []T
+
+	// Pop removes and returns the last element from the slice.
+	//
+	// Returns:
+	//   The last element of the slice.
+	Pop() T
+
+	// PopIs removes and returns the last element from the slice.
+	//
+	// Returns:
+	//   The last element of the slice.
+	//   A boolean indicating whether the element was successfully removed.
+	PopIs() (T, bool)
+
+	// Push adds one or more elements to the end of the slice.
+	//
+	// Parameters:
+	//   - values: The elements to add to the slice.
+	//
+	// Returns:
+	//   The updated slice.
+	Push(values ...T) IAdvancedSlice[T]
+
+	// PushSlice adds a slice of elements to the end of the slice.
+	//
+	// Parameters:
+	//   - values: The slice of elements to add to the slice.
+	//
+	// Returns:
+	//   The updated slice.
+	PushSlice(values ...IAdvancedSlice[T]) IAdvancedSlice[T]
+
+	// Shift removes and returns the first element from the slice.
+	//
+	// Returns:
+	//   The first element of the slice.
+	Shift() T
+
+	// ShiftIs removes and returns the first element from the slice.
+	//
+	// Returns:
+	//   The first element of the slice.
+	//   A boolean indicating whether the element was successfully removed.
+	ShiftIs() (T, bool)
+
+	// Unshift adds one or more elements to the beginning of the slice.
+	//
+	// Parameters:
+	//   - values: The elements to add to the slice.
+	//
+	// Returns:
+	//   The updated slice.
+	Unshift(values ...T) IAdvancedSlice[T]
+
+	// UnshiftSlice adds a slice of elements to the beginning of the slice.
+	//
+	// Parameters:
+	//   - values: The slice of elements to add to the slice.
+	//
+	// Returns:
+	//   The updated slice.
+	UnshiftSlice(values ...IAdvancedSlice[T]) IAdvancedSlice[T]
+
+	// Reverse reverses the order of elements in the slice.
+	//
+	// Returns:
+	//   The reversed slice.
+	Reverse() IAdvancedSlice[T]
+
+	// Remove removes elements from the slice based on a predicate function.
+	//
+	// Parameters:
+	//   - f: A predicate function that determines whether an element should be removed.
+	//
+	// Returns:
+	//   The updated slice.
+	Remove(f func(T, int) bool) IAdvancedSlice[T]
+
+	// RemoveAt removes an element at the specified index from the slice.
+	//
+	// Parameters:
+	//   - index: The index of the element to remove.
+	//
+	// Returns:
+	//   The updated slice.
+	RemoveAt(index int) IAdvancedSlice[T]
 }

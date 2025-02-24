@@ -93,6 +93,9 @@ func CopyWithIn[T any](s []T, indexList ...int) []T {
 	}
 	newData := make([]T, 0, len(indexList))
 	for _, index := range indexList {
+		if index >= len(s) || index < 0 {
+			continue
+		}
 		newData = append(newData, s[index])
 	}
 	return newData
@@ -222,32 +225,84 @@ func Join[T any](s []T, seps ...string) string {
 	return strings.Join(ss, sep)
 }
 
-// Slice returns a subset of the slice, starting at the specified begin index and optionally ending at the end index.
-//
+// Slice is a generic function that returns a sub-slice of a given slice based on specified indexes.
+// It can handle different scenarios such as single index, start and end indexes, and start, end, and step indexes.
 // Parameters:
-//   - s: The original slice.
-//   - indexes: A variadic parameter specifying the begin and optionally end and step indices.
 //
-// Returns:
+//	s: The original slice of any type.
+//	indexes: Variable-length parameter that specifies the indexes for slicing.
 //
-//	A new slice containing the specified subset.
+// Return value:
+//
+//	Returns the sliced sub-slice.
 func Slice[T any](s []T, indexes ...int) []T {
+	// Depending on the number of indexes provided, different slicing scenarios are handled.
 	switch len(indexes) {
+	case 0:
+		// If no index is provided, return the original slice.
+		return s
 	case 1:
+		// If only one index is provided, it is treated as the starting point of the slice.
 		begin := indexes[0]
+		// If the starting point is negative, reverse the slice and slice from the corresponding position.
+		if begin < 0 {
+			st := Reverse(s)
+			return Slice(st, begin+1)
+		}
+		// If the starting point exceeds the length of the slice, return nil.
+		if begin > len(s) {
+			return nil
+		}
+		// Return the sub-slice from the starting point to the end.
 		return s[begin:]
 	case 2:
+		// If two indexes are provided, they are treated as the starting and ending points of the slice.
 		begin, end := indexes[0], indexes[1]
+		// If the starting point is negative, reverse the slice and slice according to the new starting and ending points.
+		if begin < 0 {
+			st := Reverse(s)
+			return Slice(st, begin+1, end*-1-1)
+		}
+		// If the ending point exceeds the length of the slice, set it to the length of the slice.
+		if end >= len(s) {
+			end = len(s)
+		}
+		// If the starting point is greater than the ending point, return nil.
+		if begin > end {
+			return nil
+		}
+		// Return the sub-slice from the starting point to the ending point.
 		return s[begin:end]
-	case 3:
+	default:
+		// If more than two indexes are provided, the third is treated as the step size for slicing.
 		begin, end, step := indexes[0], indexes[1], indexes[2]
+		// If the starting point is negative, reverse the slice and slice according to the new starting and ending points.
+		if begin < 0 {
+			st := Reverse(s)
+			return Slice(st, begin+1, end*-1-1, step)
+		}
+		// If the ending point exceeds the length of the slice, set it to the length of the slice.
+		if end >= len(s) {
+			end = len(s)
+		}
+
+		// If the starting point is greater than the ending point, return nil.
+		if begin > end {
+			return nil
+		}
+
+		// If the step size is not positive, return nil.
+		if step <= 0 {
+			return nil
+		}
+		// Create a new slice to store the sliced elements.
 		list := make([]T, 0, (end-begin)/step)
-		for i := begin; i < end; i += step {
+		// Iterate through the original slice at the specified step size and add the elements to the new slice.
+		for i := begin; i <= end; i += step {
 			list = append(list, s[i])
 		}
+		// Return the new slice.
 		return list
-	default:
-		return s
 	}
 }
 
@@ -262,19 +317,42 @@ func Slice[T any](s []T, indexes ...int) []T {
 //
 //	The modified slice.
 func Fill[T any](s []T, value T, indexes ...int) []T {
-	if len(indexes) == 0 {
+	switch len(indexes) {
+	case 0:
 		for i := range s {
 			s[i] = value
 		}
 		return s
-	}
-
-	for _, index := range indexes {
-		if index >= 0 && index < len(s) {
-			s[index] = value
+	case 1:
+		index := indexes[0]
+		if index < 0 {
+			return Fill(Reverse(s), value, -index)
 		}
+
+		if index >= len(s) {
+			return s
+		}
+
+		for i := index; i < len(s); i++ {
+			s[i] = value
+		}
+		return s
+	default:
+		begin, end := indexes[0], indexes[1]
+		if begin > end {
+			begin, end = end, begin
+		}
+		if begin < 0 {
+			return Fill(Reverse(s), value, -begin, -end)
+		}
+		if end > len(s) {
+			end = len(s)
+		}
+		for i := begin; i < end; i++ {
+			s[i] = value
+		}
+		return s
 	}
-	return s
 }
 
 // String converts the slice to a JSON string representation.
@@ -303,6 +381,10 @@ func String[T any](s []T) string {
 //
 //	The element at the specified index.
 func At[T any](s []T, index int) T {
+	if index < 0 || index >= len(s) {
+		var zero T
+		return zero
+	}
 	return s[index]
 }
 
@@ -340,4 +422,54 @@ func Filter[T any](s []T, f func(T, int) bool) []T {
 		}
 	}
 	return list
+}
+
+// Remove removes elements from the slice based on a predicate function.
+//
+// Parameters:
+//   - s: The slice to modify.
+//   - f: A predicate function that determines whether an element should be removed.
+//
+// Returns:
+//
+//	The updated slice.
+func Remove[T any](s []T, f func(T, int) bool) []T {
+	list := make([]T, 0, len(s))
+	for i, item := range s {
+		if !f(item, i) {
+			list = append(list, item)
+		}
+	}
+	return list
+}
+
+// RemoveAt removes an element at the specified index from the slice.
+//
+// Parameters:
+//   - s: The slice to modify.
+//   - index: The index of the element to remove.
+//
+// Returns:
+//
+//	The updated slice.
+func RemoveAt[T any](s []T, index int) []T {
+	if index < 0 || index >= len(s) {
+		return s
+	}
+	return append(s[:index], s[index+1:]...)
+}
+
+// Reverse reverses the order of elements in the slice.
+//
+// Parameters:
+//   - s: The slice to reverse.
+//
+// Returns:
+//
+//	The reversed slice.
+func Reverse[T any](s []T) []T {
+	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+		s[i], s[j] = s[j], s[i]
+	}
+	return s
 }
