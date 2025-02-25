@@ -197,7 +197,7 @@ func FindLastIndex[T any](s []T, f func(T) bool) int {
 //   - s: The slice to iterate over.
 //   - f: A function that takes an element and its index as arguments.
 func ForEach[T any](s []T, f func(T, int)) {
-	list := make([]T, 0, len(s))
+	var list []T
 	copy(list, s)
 	for index, item := range list {
 		f(item, index)
@@ -279,7 +279,7 @@ func Slice[T any](s []T, indexes ...int) []T {
 		// If the starting point is negative, reverse the slice and slice according to the new starting and ending points.
 		if begin < 0 {
 			st := Reverse(s)
-			return Slice(st, begin+1, end*-1-1, step)
+			return Slice(st, -begin-1, -end-1, step)
 		}
 		// If the ending point exceeds the length of the slice, set it to the length of the slice.
 		if end >= len(s) {
@@ -287,7 +287,7 @@ func Slice[T any](s []T, indexes ...int) []T {
 		}
 
 		// If the starting point is greater than the ending point, return nil.
-		if begin > end {
+		if begin >= end {
 			return nil
 		}
 
@@ -298,7 +298,7 @@ func Slice[T any](s []T, indexes ...int) []T {
 		// Create a new slice to store the sliced elements.
 		list := make([]T, 0, (end-begin)/step)
 		// Iterate through the original slice at the specified step size and add the elements to the new slice.
-		for i := begin; i <= end; i += step {
+		for i := begin; i < end; i += step {
 			list = append(list, s[i])
 		}
 		// Return the new slice.
@@ -326,7 +326,7 @@ func Fill[T any](s []T, value T, indexes ...int) []T {
 	case 1:
 		index := indexes[0]
 		if index < 0 {
-			return Fill(Reverse(s), value, -index)
+			return Fill(Reverse(s), value, -index-1)
 		}
 
 		if index >= len(s) {
@@ -339,14 +339,14 @@ func Fill[T any](s []T, value T, indexes ...int) []T {
 		return s
 	default:
 		begin, end := indexes[0], indexes[1]
-		if begin > end {
-			begin, end = end, begin
-		}
 		if begin < 0 {
-			return Fill(Reverse(s), value, -begin, -end)
+			return Fill(Reverse(s), value, -begin-1, -end-1)
 		}
 		if end > len(s) {
 			end = len(s)
+		}
+		if begin >= end {
+			return nil
 		}
 		for i := begin; i < end; i++ {
 			s[i] = value

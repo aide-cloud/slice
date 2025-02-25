@@ -211,6 +211,7 @@ func TestForEach(t *testing.T) {
 	}{
 		{"empty slice", []int{}, func(i int, idx int) {}},
 		{"non-empty slice", []int{1, 2, 3}, func(i int, idx int) { t.Logf("Element: %d, Index: %d", i, idx) }},
+		{"nil slice", nil, func(i int, idx int) { t.Logf("Element: %d, Index: %d", i, idx) }},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -250,7 +251,7 @@ func TestSlice(t *testing.T) {
 		{"empty slice", []int{}, []int{0}, []int{}},
 		{"single index", []int{1, 2, 3, 4, 5}, []int{2}, []int{3, 4, 5}},
 		{"two indices", []int{1, 2, 3, 4, 5}, []int{1, 3}, []int{2, 3}},
-		{"three indices", []int{1, 2, 3, 4, 5, 6, 7, 8, 9}, []int{1, 7, 2}, []int{2, 4, 6, 8}},
+		{"three indices", []int{1, 2, 3, 4, 5, 6, 7, 8, 9}, []int{1, 7, 2}, []int{2, 4, 6}},
 		{"begin greater than end", []int{1, 2, 3, 4, 5}, []int{3, 1}, nil},
 		{"begin negative", []int{1, 2, 3, 4, 5}, []int{-1, 3}, nil},
 		{"end greater than length", []int{1, 2, 3, 4, 5}, []int{1, 10}, []int{2, 3, 4, 5}},
@@ -263,6 +264,63 @@ func TestSlice(t *testing.T) {
 		{"begin and end equal length", []int{1, 2, 3, 4, 5}, []int{5, 5}, []int{}},
 		{"begin and end greater than length", []int{1, 2, 3, 4, 5}, []int{6, 7}, nil},
 		{"step greater than length", []int{1, 2, 3, 4, 5}, []int{0, 5, 6}, []int{1}},
+		{"begin less than zero", []int{1, 2, 3, 4, 5}, []int{-1}, []int{5, 4, 3, 2, 1}},
+		{"begin and end less than zero", []int{1, 2, 3, 4, 5}, []int{-1, -5}, []int{5, 4, 3, 2}},
+		{"begin and end less than zero and end gt 0", []int{1, 2, 3, 4, 5}, []int{-1, 5}, nil},
+		{"begin and end greater than length", []int{1, 2, 3, 4, 5}, []int{6, 7}, nil},
+		{"begin and end equal length", []int{1, 2, 3, 4, 5}, []int{5, 5}, []int{}},
+		{"begin greater than end", []int{1, 2, 3, 4, 5}, []int{5, 4}, nil},
+		{"begin equal end", []int{1, 2, 3, 4, 5}, []int{5, 5, 1}, nil},
+		// -1 5 1
+		{"-1 5 1", []int{1, 2, 3, 4, 5}, []int{-1, 5, 1}, nil},
+		// -1 5 -1
+		{"1 5 -1", []int{1, 2, 3, 4, 5}, []int{-1, 5, -1}, nil},
+		// -1 -5 1
+		{"-1 -5 1", []int{1, 2, 3, 4, 5}, []int{-1, -5, 1}, []int{5, 4, 3, 2}},
+		// -1 -5 -1
+		{"-1 -5 -1", []int{1, 2, 3, 4, 5}, []int{-1, -5, -1}, nil},
+		// -1 -10 -1
+		{"-1 -10 -1", []int{1, 2, 3, 4, 5}, []int{-1, -10, -1}, nil},
+		// -1 -10 1
+		{"-1 -10 1", []int{1, 2, 3, 4, 5}, []int{-1, -10, 1}, []int{5, 4, 3, 2, 1}},
+		// -1 10 -1
+		{"-1 10 -1", []int{1, 2, 3, 4, 5}, []int{-1, 10, -1}, nil},
+		// -1 10 1
+		{"-1 10 1", []int{1, 2, 3, 4, 5}, []int{-1, 10, 1}, nil},
+		// -1 5 2
+		{"-1 5 2", []int{1, 2, 3, 4, 5}, []int{-1, 5, 2}, nil},
+		// -1 5 -2
+		{"-1 5 -2", []int{1, 2, 3, 4, 5}, []int{-1, 5, -2}, nil},
+		// -1 -5 2
+		{"-1 -5 2", []int{1, 2, 3, 4, 5}, []int{-1, -5, 2}, []int{5, 3}},
+		// -1 -5 -2
+		{"-1 -5 -2", []int{1, 2, 3, 4, 5}, []int{-1, -5, -2}, nil},
+		// -1 -10 -2
+		{"-1 -10 -2", []int{1, 2, 3, 4, 5}, []int{-1, -10, -2}, nil},
+		// -1 -10 2
+		{"-1 -10 2", []int{1, 2, 3, 4, 5}, []int{-1, -10, 2}, []int{5, 3, 1}},
+		// -1 10 -2
+		{"-1 10 -2", []int{1, 2, 3, 4, 5}, []int{-1, 10, -2}, nil},
+		// -1 10 2
+		{"-1 10 2", []int{1, 2, 3, 4, 5}, []int{-1, 10, 2}, nil},
+		// -1 5 5
+		{"-1 5 5", []int{1, 2, 3, 4, 5}, []int{-1, 5, 5}, nil},
+		// -1 5 -5
+		{"-1 5 -5", []int{1, 2, 3, 4, 5}, []int{-1, 5, -5}, nil},
+		// -1 -5 5
+		{"-1 -5 5", []int{1, 2, 3, 4, 5}, []int{-1, -5, 5}, []int{5}},
+		// -1 -5 -5
+		{"-1 -5 -5", []int{1, 2, 3, 4, 5}, []int{-1, -5, -5}, nil},
+		// -1 -10 -5
+		{"-1 -10 -5", []int{1, 2, 3, 4, 5}, []int{-1, -10, -5}, nil},
+		// -1 -10 5
+		{"-1 -10 5", []int{1, 2, 3, 4, 5}, []int{-1, -10, 5}, []int{5}},
+		// -1 10 -5
+		{"-1 10 -5", []int{1, 2, 3, 4, 5}, []int{-1, 10, -5}, nil},
+		// -1 10 5
+		{"-1 10 5", []int{1, 2, 3, 4, 5}, []int{-1, 10, 5}, nil},
+		{"-1 10 10", []int{1, 2, 3, 4, 5}, []int{-1, 10, 10}, nil},
+		{"-1 -10 10", []int{1, 2, 3, 4, 5}, []int{-1, -10, 10}, []int{5}},
 	}
 
 	for _, tt := range tests {
@@ -287,8 +345,14 @@ func TestFill(t *testing.T) {
 		{"fill from index", []int{1, 2, 3}, 0, []int{1}, []int{1, 0, 0}},
 		{"fill range", []int{1, 2, 3, 4, 5}, 0, []int{1, 3}, []int{1, 0, 0, 4, 5}},
 		{"fill invalid index", []int{1, 2, 3}, 0, []int{5}, []int{1, 2, 3}},
-		{"fill negative index", []int{1, 2, 3}, 0, []int{-1}, []int{3, 0, 0}},
-		{"fill reverse range", []int{1, 2, 3, 4, 5}, 0, []int{3, 1}, []int{1, 0, 0, 4, 5}},
+		{"fill negative index", []int{1, 2, 3}, 0, []int{-1}, []int{0, 0, 0}},
+		{"fill reverse range", []int{1, 2, 3, 4, 5}, 0, []int{3, 1}, nil},
+		{"fill invalid range", []int{1, 2, 3}, 0, []int{1, 3}, []int{1, 0, 0}},
+		{"fill invalid negative range", []int{1, 2, 3}, 0, []int{-1, 3}, nil},
+		{"fill invalid negative range", []int{1, 2, 3}, 0, []int{1, -3}, nil},
+		{"fill invalid range", []int{1, 2, 3}, 0, []int{3, 1}, nil},
+		{"begin eq end", []int{1, 2, 3}, 0, []int{0, 0}, nil},
+		{"end gt len", []int{1, 2, 3}, 0, []int{0, 4}, []int{0, 0, 0}},
 	}
 
 	for _, tt := range tests {
