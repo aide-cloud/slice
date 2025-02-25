@@ -4,6 +4,8 @@
 The Slice Utility Project provides a comprehensive set of utility functions to manipulate slices in Go. These utilities are designed to simplify common operations such as filtering, mapping, and reducing slices, thereby enhancing productivity and code readability.
 
 ### Features
+- **String**: Convert all elements to strings.
+- **Length**: Return the length of the slice.
 - **Filter**: Remove elements from a slice based on a condition.
 - **Map**: Transform elements in a slice using a provided function.
 - **Reduce**: Reduce a slice to a single value by applying a function cumulatively to the elements.
@@ -22,6 +24,9 @@ The Slice Utility Project provides a comprehensive set of utility functions to m
 - **At**: Retrieve the element at a specified index.
 - **Sort**: Sort the slice based on a comparison function.
 - **Values**: Return the underlying slice of elements.
+- **Remove**: Remove elements from a slice based on a condition.
+- **RemoveAt**: Remove elements from a slice based on a condition.
+- **Reverse**: Reverse the order of elements in the slice.
 
 ### Installation
 
@@ -44,10 +49,10 @@ You can create an advanced slice with initial data or an empty advanced slice.
 
 ```go
 // Create an advanced slice with initial data
-advanced := NewAdvancedSlice([]int{1, 2, 3, 4})
+advanced := slice.NewAdvancedSlice([]int{1, 2, 3, 4})
 
 // Create an empty advanced slice
-emptyAdvanced := NewAdvancedSlice[int](nil)
+emptyAdvanced :=slice.NewAdvancedSlice[int](nil)
 ```
 
 
