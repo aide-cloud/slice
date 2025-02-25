@@ -7,7 +7,7 @@ package slice
 //
 // Returns:
 //
-//	An interface of type IAdvancedSlice[T], which provides advanced functionality for manipulating the slice.
+//   - IAdvancedSlice[T]: An interface of type IAdvancedSlice[T], which provides advanced functionality for manipulating the slice.
 //
 // Example:
 //

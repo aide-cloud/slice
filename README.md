@@ -52,7 +52,7 @@ You can create an advanced slice with initial data or an empty advanced slice.
 advanced := slice.NewAdvancedSlice([]int{1, 2, 3, 4})
 
 // Create an empty advanced slice
-emptyAdvanced :=slice.NewAdvancedSlice[int](nil)
+emptyAdvanced := slice.NewAdvancedSlice[int](nil)
 ```
 
 
